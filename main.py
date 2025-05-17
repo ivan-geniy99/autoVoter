@@ -22,11 +22,14 @@ def root():
 
 @app.route("/vote")
 def vote():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(send_vote())
-    loop.close()
-    return result
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(send_vote())
+        loop.close()
+        return result
+    except Exception as e:
+        return f"❌ Ошибка: {e}"
 
 async def send_vote():
     await client.connect()
