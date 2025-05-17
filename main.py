@@ -4,6 +4,9 @@ from telethon.sessions import StringSession
 import os
 import asyncio
 from datetime import datetime
+import nest_asyncio
+
+nest_asyncio.apply()  # Важная строчка — позволяет переиспользовать event loop
 
 app = Flask(__name__)
 
@@ -16,6 +19,11 @@ client = TelegramClient(StringSession(session_str), api_id, api_hash)
 vote_params = ['vote_-1002366046946']
 bot_username = 'BBTrendingBot'
 
+@app.before_first_request
+def startup():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(client.connect())
+
 @app.route("/")
 def root():
     return "✅ Flask работает!"
@@ -23,16 +31,13 @@ def root():
 @app.route("/vote")
 def vote():
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        loop = asyncio.get_event_loop()
         result = loop.run_until_complete(send_vote())
-        loop.close()
         return result
     except Exception as e:
         return f"❌ Ошибка: {e}"
 
 async def send_vote():
-    await client.connect()
     if not await client.is_user_authorized():
         return "❌ Не авторизован. Нужна новая авторизация."
     
