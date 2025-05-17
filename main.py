@@ -8,7 +8,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 api_id = int(os.environ.get("API_ID"))
-api_hash = os.environ.get("API_HASH"))
+api_hash = os.environ.get("API_HASH")
 session_str = os.environ.get("SESSION_STRING")
 
 client = TelegramClient(StringSession(session_str), api_id, api_hash)
