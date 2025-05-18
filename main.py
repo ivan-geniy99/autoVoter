@@ -15,7 +15,7 @@ api_hash = "abad68fdf249153b744a7bd0e6ffd528"
 phone = "+79954879633"
 
 # Инициализируем клиент Telegram
-client = TelegramClient('anon', api_id, api_hash)
+client = TelegramClient('anon.session', api_id, api_hash)
 
 # Параметры голосования
 vote_params = [
