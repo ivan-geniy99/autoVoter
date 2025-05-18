@@ -6,13 +6,14 @@ from flask import Flask, request
 from threading import Thread
 import nest_asyncio
 import requests
+import subprocess
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, PhoneCodeExpiredError
 
 nest_asyncio.apply()
 
-api_id = 17908246
-api_hash = "f338e4b3d1e23f20ead9dd68e61ebabf"
-phone = "+79371842996"
+api_id = 24915095
+api_hash = "abad68fdf249153b744a7bd0e6ffd528"
+phone = "+79954879633"
 
 client = TelegramClient('anon', api_id, api_hash)
 
@@ -29,6 +30,15 @@ def send_to_google_script(messages):
         print(f"[{datetime.now()}] 📬 POST в Google Script: {response.status_code}, {response.text}")
     except Exception as e:
         print(f"❌ Ошибка при отправке в Google Script: {e}")
+
+def git_commit_and_push_session():
+    try:
+        subprocess.run(['git', 'add', 'anon.session'], check=True)
+        subprocess.run(['git', 'commit', '-m', 'Обновлена сессия после /auth'], check=True)
+        subprocess.run(['git', 'push'], check=True)
+        print("✅ anon.session успешно запушен в репозиторий")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Ошибка git: {e}")
 
 async def send_votes():
     await client.connect()
@@ -95,6 +105,9 @@ def auth():
         finally:
             await client.disconnect()
 
+        # После успешной авторизации пушим сессию
+        git_commit_and_push_session()
+
     try:
         # Сначала проверяем авторизацию с подключением
         if loop.run_until_complete(check_authorized()):
@@ -139,7 +152,6 @@ def auth():
     except Exception as e:
         print(f"❌ Ошибка авторизации: {e}")
         return f"❌ Ошибка: {e}"
-
 
 def run():
     app.run(host='0.0.0.0', port=8080)
