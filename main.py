@@ -10,9 +10,9 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-api_id = int(os.environ.get("API_ID"))
-api_hash = os.environ.get("API_HASH")
-session_str = os.environ.get("SESSION_STRING")
+api_id = 24915095
+api_hash = "abad68fdf249153b744a7bd0e6ffd528"
+session_str = "1ApWapzMBu4IJw_qJ-jX_5RCvUwAmkTjPrGYCpmDPtzvj-63Mh7zfhUidSUN5lIH9D3s5waHd01rAD7EgANK9dfZgaonyztjLWOO8qjApGgtA_FwrbtQ_YoFFynn5HZx55-RWVcCn8DBAQXJpIF-ADxan0V2n1Q5xlXYtWsJ_VNCT8YOdkyVG0oXgBAIjyHbcwkXwryrONhev5hh63urIv8lussBqIXt0HzGKypZ-dj1FfGz1LRBvZurT-4l6FkY1uasWG_hCLKWv9bVgkf-da_Zau_YKmkVENnzqACSZPtQdLV_1JmPKjjEwwDkU-8xZC6Hl4kKcyJq4-cKqIYsmnF9cXi1ndbU="
 
 client = TelegramClient(StringSession(session_str), api_id, api_hash)
 
