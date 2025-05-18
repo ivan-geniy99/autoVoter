@@ -71,6 +71,12 @@ def trigger_vote():
 
 @app.route('/auth', methods=["GET", "POST"])
 def auth():
+    loop = asyncio.get_event_loop()
+
+    # Проверяем, авторизован ли уже пользователь
+    if loop.run_until_complete(client.is_user_authorized()):
+        return "✅ Уже авторизованы, переходите к голосованию."
+
     async def send_code():
         await client.connect()
         return await client.send_code_request(phone)
@@ -85,8 +91,6 @@ def auth():
                 raise SessionPasswordNeededError("⚠️ Пароль нужен, но не был передан")
 
     try:
-        loop = asyncio.get_event_loop()
-
         if request.method == "POST":
             code = request.form.get("code")
             password = request.form.get("password")
