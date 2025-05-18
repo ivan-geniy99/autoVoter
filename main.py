@@ -75,21 +75,38 @@ def auth():
         await client.connect()
         return await client.send_code_request(phone)
 
-    async def complete_sign_in(code):
-        return await client.sign_in(phone=phone, code=code)
+    async def complete_sign_in(code, password=None):
+        try:
+            await client.sign_in(phone=phone, code=code)
+        except SessionPasswordNeededError:
+            if password:
+                await client.sign_in(password=password)
+            else:
+                raise SessionPasswordNeededError("⚠️ Пароль нужен, но не был передан")
 
     try:
         loop = asyncio.get_event_loop()
 
         if request.method == "POST":
-            code = request.form["code"]
+            code = request.form.get("code")
+            password = request.form.get("password")
             try:
-                loop.run_until_complete(complete_sign_in(code))
+                loop.run_until_complete(complete_sign_in(code, password))
                 return "✅ Успешная авторизация!"
             except PhoneCodeInvalidError:
                 return "❌ Неверный код. Попробуйте ещё раз."
             except PhoneCodeExpiredError:
                 return "⌛ Код истёк. Перезапросите его через несколько минут."
+            except SessionPasswordNeededError:
+                # Если пароль не передан, но требуется — повторно показываем форму с сообщением
+                return '''
+                    <p>🔐 Требуется пароль двухфакторной аутентификации</p>
+                    <form method="POST">
+                        Код из Telegram: <input name="code" /><br>
+                        Пароль: <input name="password" type="password" /><br>
+                        <input type="submit" value="Войти" />
+                    </form>
+                '''
 
         # GET-запрос — попытка отправки кода
         try:
@@ -101,13 +118,12 @@ def auth():
         return f'''
             <p>{msg}</p>
             <form method="POST">
-                Введите код Telegram: <input name="code" />
+                Введите код Telegram: <input name="code" /><br>
+                Пароль (если есть): <input name="password" type="password" /><br>
                 <input type="submit" value="Войти" />
             </form>
         '''
 
-    except SessionPasswordNeededError:
-        return "🔐 Вход невозможен: включена двухфакторная аутентификация."
     except Exception as e:
         print(f"❌ Ошибка авторизации: {e}")
         return f"❌ Ошибка: {e}"
