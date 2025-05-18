@@ -10,7 +10,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-api_id = "24915095"
+api_id = 24915095
 api_hash = "abad68fdf249153b744a7bd0e6ffd528"
 session_str = "1ApWapzMBu0bfMLZmGEDf_2Fs9dwY7Uy1qylHr1_1V5Wx2vG3dYYjLCKyqFy6TgyLNKdRdlpSJGpVv0evchSVB4c_PNL2J1JEgvsvLB-OArH4nWyeT457soRUp0cf4xFSOrgZUKGqie6EayvlpxGye0fzejw60RM-1rTYPt2iHNFOPcakCPpN5QPzGJmFcC3oZiYJ_EiQz8f_F4YXO_nVTZu1i14kQnddcA_pKXMHTU7lFyNHx4SHgKDuEI0GbYfpSkt72AILZq6d-QGMij2HYz5jiMXvIlHgiseJipCdYeqheANaOjxhhYqiXoa8SSQd7YkIYgzdKUMf821fLzu8rW3VVycQkxE="
 
