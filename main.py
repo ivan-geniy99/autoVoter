@@ -10,9 +10,9 @@ from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, P
 
 nest_asyncio.apply()
 
-api_id = 24915095
-api_hash = "abad68fdf249153b744a7bd0e6ffd528"
-phone = "+79954879633"
+api_id = 17908246
+api_hash = "f338e4b3d1e23f20ead9dd68e61ebabf"
+phone = "+79371842996"
 
 client = TelegramClient('anon', api_id, api_hash)
 
