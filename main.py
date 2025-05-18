@@ -37,7 +37,7 @@ async def send_votes():
 
     print(f"[{datetime.now()}] ✅ Авторизация успешна")
 
-    bot_username = 'BBTrendingBot'
+    bot_username = '@BBTrendingBot'
     messages_log = []
 
     for param in vote_params:
