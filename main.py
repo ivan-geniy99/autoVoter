@@ -10,18 +10,17 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-api_id = 24915095
-api_hash = "abad68fdf249153b744a7bd0e6ffd528"
-session_str = "1ApWapzMBu0bfMLZmGEDf_2Fs9dwY7Uy1qylHr1_1V5Wx2vG3dYYjLCKyqFy6TgyLNKdRdlpSJGpVv0evchSVB4c_PNL2J1JEgvsvLB-OArH4nWyeT457soRUp0cf4xFSOrgZUKGqie6EayvlpxGye0fzejw60RM-1rTYPt2iHNFOPcakCPpN5QPzGJmFcC3oZiYJ_EiQz8f_F4YXO_nVTZu1i14kQnddcA_pKXMHTU7lFyNHx4SHgKDuEI0GbYfpSkt72AILZq6d-QGMij2HYz5jiMXvIlHgiseJipCdYeqheANaOjxhhYqiXoa8SSQd7YkIYgzdKUMf821fLzu8rW3VVycQkxE="
+api_id = int(os.environ.get("API_ID"))
+api_hash = os.environ.get("API_HASH")
 
-client = TelegramClient(StringSession(session_str), api_id, api_hash)
+client = TelegramClient("anon", api_id, api_hash)
 
 vote_params = ['vote_-1002366046946']
 bot_username = 'BBTrendingBot'
 
 @app.route("/")
 def root():
-    return "✅ Flask работает!"
+    return f"✅ Flask работает! client = {client.is_user_authorized()}"
 
 @app.route("/vote")
 def vote():
