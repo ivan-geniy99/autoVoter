@@ -73,15 +73,18 @@ def trigger_vote():
 def auth():
     loop = asyncio.get_event_loop()
 
-    # Проверяем, авторизован ли уже пользователь
-    if loop.run_until_complete(client.is_user_authorized()):
-        return "✅ Уже авторизованы, переходите к голосованию."
+    async def check_authorized():
+        await client.connect()
+        authorized = await client.is_user_authorized()
+        await client.disconnect()
+        return authorized
 
     async def send_code():
         await client.connect()
         return await client.send_code_request(phone)
 
     async def complete_sign_in(code, password=None):
+        await client.connect()
         try:
             await client.sign_in(phone=phone, code=code)
         except SessionPasswordNeededError:
@@ -89,8 +92,14 @@ def auth():
                 await client.sign_in(password=password)
             else:
                 raise SessionPasswordNeededError("⚠️ Пароль нужен, но не был передан")
+        finally:
+            await client.disconnect()
 
     try:
+        # Сначала проверяем авторизацию с подключением
+        if loop.run_until_complete(check_authorized()):
+            return "✅ Уже авторизованы, переходите к голосованию."
+
         if request.method == "POST":
             code = request.form.get("code")
             password = request.form.get("password")
@@ -102,7 +111,6 @@ def auth():
             except PhoneCodeExpiredError:
                 return "⌛ Код истёк. Перезапросите его через несколько минут."
             except SessionPasswordNeededError:
-                # Если пароль не передан, но требуется — повторно показываем форму с сообщением
                 return '''
                     <p>🔐 Требуется пароль двухфакторной аутентификации</p>
                     <form method="POST">
@@ -112,7 +120,7 @@ def auth():
                     </form>
                 '''
 
-        # GET-запрос — попытка отправки кода
+        # GET-запрос — отправляем код
         try:
             loop.run_until_complete(send_code())
             msg = "📩 Код отправлен. Введите его ниже:"
@@ -131,6 +139,7 @@ def auth():
     except Exception as e:
         print(f"❌ Ошибка авторизации: {e}")
         return f"❌ Ошибка: {e}"
+
 
 def run():
     app.run(host='0.0.0.0', port=8080)
