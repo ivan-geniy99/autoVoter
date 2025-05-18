@@ -56,3 +56,67 @@ async def send_votes():
 app = Flask(__name__)
 
 @app.route('/')
+def index():
+    return "🟢 Бот активен"
+
+@app.route('/vote')
+def trigger_vote():
+    try:
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(send_votes())
+        return result
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        return f"❌ Ошибка: {str(e)}"
+
+@app.route('/auth', methods=["GET", "POST"])
+def auth():
+    async def send_code():
+        await client.connect()
+        return await client.send_code_request(phone)
+
+    async def complete_sign_in(code):
+        return await client.sign_in(phone=phone, code=code)
+
+    try:
+        loop = asyncio.get_event_loop()
+
+        if request.method == "POST":
+            code = request.form["code"]
+            try:
+                loop.run_until_complete(complete_sign_in(code))
+                return "✅ Успешная авторизация!"
+            except PhoneCodeInvalidError:
+                return "❌ Неверный код. Попробуйте ещё раз."
+            except PhoneCodeExpiredError:
+                return "⌛ Код истёк. Перезапросите его через несколько минут."
+
+        # GET-запрос — попытка отправки кода
+        try:
+            loop.run_until_complete(send_code())
+            msg = "📩 Код отправлен. Введите его ниже:"
+        except Exception as e:
+            msg = f"⚠️ Код не отправлен, возможно он уже был отправлен ранее. Просто введите его ниже: ({e})"
+
+        return f'''
+            <p>{msg}</p>
+            <form method="POST">
+                Введите код Telegram: <input name="code" />
+                <input type="submit" value="Войти" />
+            </form>
+        '''
+
+    except SessionPasswordNeededError:
+        return "🔐 Вход невозможен: включена двухфакторная аутентификация."
+    except Exception as e:
+        print(f"❌ Ошибка авторизации: {e}")
+        return f"❌ Ошибка: {e}"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+keep_alive()
