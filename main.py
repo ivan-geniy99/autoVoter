@@ -38,10 +38,11 @@ def send_to_google_script(messages):
 
 # Основная функция отправки команд
 async def send_votes():
-    if not client.is_connected():
-        await client.connect()
-        if not await client.is_user_authorized():
-            await client.start(phone)
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        return "❌ Сессия недействительна. Загрузите корректный anon.session файл."
+
     print(f"[{datetime.now()}] ✅ Авторизация успешна")
 
     bot_username = 'BBTrendingBot'
@@ -56,10 +57,10 @@ async def send_votes():
 
     await client.disconnect()
 
-    # Отправляем логи в Google Script
     send_to_google_script(messages_log)
 
     return "✅ Голосование выполнено"
+
 
 # Flask-сервер
 app = Flask(__name__)
