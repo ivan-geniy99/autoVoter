@@ -4,6 +4,10 @@ import os
 from datetime import datetime
 from flask import Flask
 from threading import Thread
+import nest_asyncio
+import requests
+
+nest_asyncio.apply()
 
 # Переменные окружения
 api_id = 24915095
@@ -18,6 +22,20 @@ vote_params = [
     'vote_-1002366046946',
 ]
 
+# URL скрипта Google Apps Script
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh_gh1s8ZxGzHOXCTWHUNnexw6kaAgHefPHEKo70oUGwg2F5rfO5Jy6yJyhErGqmR5/exec"
+
+# Функция отправки POST-запроса в Google Script
+def send_to_google_script(messages):
+    try:
+        payload = {
+            "messages": messages
+        }
+        response = requests.post(GOOGLE_SCRIPT_URL, json=payload)
+        print(f"[{datetime.now()}] 📬 POST в Google Script: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"❌ Ошибка при отправке в Google Script: {e}")
+
 # Основная функция отправки команд
 async def send_votes():
     if not client.is_connected():
@@ -27,16 +45,24 @@ async def send_votes():
     print(f"[{datetime.now()}] ✅ Авторизация успешна")
 
     bot_username = 'BBTrendingBot'
+    messages_log = []
 
     for param in vote_params:
-        await client.send_message(bot_username, f'/start {param}')
-        print(f"[{datetime.now()}] 🚀 Отправлена команда: /start {param}")
+        command = f'/start {param}'
+        await client.send_message(bot_username, command)
+        log = f"[{datetime.now()}] 🚀 Отправлена команда: {command}"
+        print(log)
+        messages_log.append(log)
 
     await client.disconnect()
+
+    # Отправляем логи в Google Script
+    send_to_google_script(messages_log)
+
     return "✅ Голосование выполнено"
 
 # Flask-сервер
-app = Flask('')
+app = Flask(__name__)
 
 @app.route('/')
 def index():
@@ -45,8 +71,9 @@ def index():
 @app.route('/vote')
 def trigger_vote():
     try:
-        asyncio.run(send_votes())
-        return "✅ Голосование отправлено"
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(send_votes())
+        return result
     except Exception as e:
         print(f"❌ Ошибка: {e}")
         return f"❌ Ошибка: {str(e)}"
