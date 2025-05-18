@@ -1,70 +1,63 @@
-import nest_asyncio
-nest_asyncio.apply()
-
-from flask import Flask
 from telethon import TelegramClient
-from telethon.sessions import StringSession
-import os
 import asyncio
+import os
 from datetime import datetime
+from flask import Flask
+from threading import Thread
 
-app = Flask(__name__)
+# Переменные окружения
+api_id = 24915095
+api_hash = "abad68fdf249153b744a7bd0e6ffd528"
+phone = "+79954879633"
 
-api_id = int(os.environ.get("API_ID"))
-api_hash = os.environ.get("API_HASH")
+# Инициализируем клиент Telegram
+client = TelegramClient('anon', api_id, api_hash)
 
-client = TelegramClient("anon", api_id, api_hash)
+# Параметры голосования
+vote_params = [
+    'vote_-1002366046946',
+]
 
-vote_params = ['vote_-1002366046946']
-bot_username = 'BBTrendingBot'
+# Основная функция отправки команд
+async def send_votes():
+    if not client.is_connected():
+        await client.connect()
+        if not await client.is_user_authorized():
+            await client.start(phone)
+    print(f"[{datetime.now()}] ✅ Авторизация успешна")
 
-@app.route("/")
-def root():
-    return f"✅ Flask работает! client = {client.is_user_authorized()}"
+    bot_username = 'BBTrendingBot'
 
-@app.route("/vote")
-def vote():
-    try:
-        loop = asyncio.get_event_loop()
-        if not client.is_connected():
-            loop.run_until_complete(client.connect())
-        authorized = loop.run_until_complete(client.is_user_authorized())
-        print(f"[{datetime.now()}] Client connected: {client.is_connected()}, authorized: {authorized}")
-        if not authorized:
-            return "❌ Не авторизован. Нужна новая авторизация."
-        result = loop.run_until_complete(send_vote())
-        return result
-    except Exception as e:
-        return f"❌ Ошибка: {e}"
-
-async def send_vote():
     for param in vote_params:
-        await client.send_message(bot_username, f"/start {param}")
-        print(f"[{datetime.now()}] ✅ Отправлена команда: /start {param}")
+        await client.send_message(bot_username, f'/start {param}')
+        print(f"[{datetime.now()}] 🚀 Отправлена команда: /start {param}")
 
-    # Немного подождём, чтобы бот успел ответить
-    await asyncio.sleep(2)
+    await client.disconnect()
+    return "✅ Голосование выполнено"
 
-    # Получаем последние 5 сообщений от бота
-    messages = await client.get_messages(bot_username, limit=5)
+# Flask-сервер
+app = Flask('')
 
-    # Формируем текст сообщений
-    messages_text = "\n\n".join(
-        [f"[{msg.date.strftime('%Y-%m-%d %H:%M:%S')}] {msg.sender_id}: {msg.text}" for msg in messages]
-    )
+@app.route('/')
+def index():
+    return "🟢 Бот активен"
 
-    print(f"[{datetime.now()}] 📨 Последние сообщения:\n{messages_text}")
-
-    # Отправляем их в Google Apps Script
-    webhook_url = "https://script.google.com/macros/s/AKfycbxh_gh1s8ZxGzHOXCTWHUNnexw6kaAgHefPHEKo70oUGwg2F5rfO5Jy6yJyhErGqmR5/exec"
+@app.route('/vote')
+def trigger_vote():
     try:
-        import requests
-        response = requests.post(webhook_url, json={"messages": messages_text})
-        print(f"[Webhook] Ответ от Google Script: {response.text}")
+        asyncio.run(send_votes())
+        return "✅ Голосование отправлено"
     except Exception as e:
-        print(f"❌ Ошибка при отправке в Google Script: {e}")
+        print(f"❌ Ошибка: {e}")
+        return f"❌ Ошибка: {str(e)}"
 
-    return "🚀 Голос отправлен! Последние сообщения отправлены в Google Script."
+# Запуск Flask в отдельном потоке
+def run():
+    app.run(host='0.0.0.0', port=8080)
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# Запускаем веб-сервер
+keep_alive()
